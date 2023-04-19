@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 
 public class KafkaService {
     public static void startKafkaStreaming() throws TimeoutException, StreamingQueryException {
-        SparkSession spark = SparkSession.builder().master("local").appName("EmailFilter").getOrCreate();
+        SparkSession spark = SparkSession.builder().master("local").appName("Kafka Streaming").getOrCreate();
 
         spark.sparkContext().setLogLevel("ERROR");
 
