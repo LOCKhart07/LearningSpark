@@ -6,6 +6,14 @@ import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
@@ -44,24 +52,23 @@ public class SpendingService {
         return averageYearlyAmountAll;
     }
 
-    public static LinearRegressionModel trainLinearRegressionModel(Dataset<Row> formattedData) {
+    public static LinearRegressionModel trainLinearRegressionModel(Dataset<Row> formattedData, Dataset<Row> newData) {
         VectorAssembler assembler = new VectorAssembler().setInputCols(new String[]{"Length of Membership"}).setOutputCol("features");
 
-        System.out.println(assembler);
 
         Dataset<Row> data = formattedData.select("Yearly Amount Spent", "Length of Membership");
         Dataset<Row> trainingData = assembler.transform(data).select(col("features"), col("Yearly Amount Spent"));
 
         LinearRegression linearRegression = new LinearRegression().setLabelCol("Yearly Amount Spent").setFeaturesCol("features");
 
-        LinearRegressionModel model = linearRegression.fit(trainingData);
-        Dataset<Row> predictions = model.transform(assembler.transform(data)).select(col("Yearly Amount Spent"), col("prediction"));
-
-        RegressionEvaluator evaluator = new RegressionEvaluator().setLabelCol("Yearly Amount Spent").setPredictionCol("prediction").setMetricName("r2");
-
-        double rSquared = evaluator.evaluate(predictions);
-
-        System.out.println("R-squared: " + rSquared);
-        return model;
+        LinearRegressionModel linearRegressionModel = linearRegression.fit(trainingData);
+//        Dataset<Row> predictions = model.transform(assembler.transform(data)).select(col("Yearly Amount Spent"), col("prediction"));
+//
+//        RegressionEvaluator evaluator = new RegressionEvaluator().setLabelCol("Yearly Amount Spent").setPredictionCol("prediction").setMetricName("r2");
+//
+//        double rSquared = evaluator.evaluate(predictions);
+//
+//        System.out.println("R-squared: " + rSquared);
+        return linearRegressionModel;
     }
 }
