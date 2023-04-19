@@ -71,4 +71,20 @@ public class SpendingService {
 //        System.out.println("R-squared: " + rSquared);
         return linearRegressionModel;
     }
+
+    public static Dataset<Row> getYearlySpendingBySubscriptionLength(Dataset<Row> formattedData, Dataset<Row> newData) {
+        // Linear Regression
+        LinearRegressionModel linearRegressionModel = SpendingService.trainLinearRegressionModel(formattedData, newData);
+
+        VectorAssembler vectorAssembler = new VectorAssembler().setInputCols(new String[]{"Length of Membership"}).setOutputCol("features");
+
+        Dataset<Row> newDataWithFeatures = vectorAssembler.transform(newData).select("features");
+
+        // Make predictions
+        Dataset<Row> predictions = linearRegressionModel.transform(newDataWithFeatures);
+        predictions = predictions.withColumnRenamed("features", "Length of Membership").withColumnRenamed("prediction", "Predicted Yearly Spending");
+
+        return predictions;
+    }
+
 }

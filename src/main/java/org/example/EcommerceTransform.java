@@ -44,24 +44,12 @@ public class EcommerceTransform {
 
         SpendingService.getAverageYearlySpendingPerDomain(formattedData).show();
 
-
+        // Create Dataset with Placeholder users with length of membership
         List<Row> rowList = Arrays.asList(RowFactory.create(4.5), RowFactory.create(6.2));
-
         StructType schema = new StructType(new StructField[]{new StructField("Length of Membership", DataTypes.DoubleType, false, Metadata.empty())});
-
         Dataset<Row> newData = spark.createDataFrame(rowList, schema);
 
-
-        // Linear Regression
-        LinearRegressionModel linearRegressionModel = SpendingService.trainLinearRegressionModel(formattedData, newData);
-
-        VectorAssembler vectorAssembler = new VectorAssembler().setInputCols(new String[]{"Length of Membership"}).setOutputCol("features");
-
-        Dataset<Row> newDataWithFeatures = vectorAssembler.transform(newData).select("features");
-
-        // Make predictions
-        Dataset<Row> predictions = linearRegressionModel.transform(newDataWithFeatures);
-        predictions.withColumnRenamed("features","Length of Membership").withColumnRenamed("prediction","Predicted Average Yearly Spending").show();
+        SpendingService.getYearlySpendingBySubscriptionLength(formattedData, newData).show();
 
         spark.stop();
     }
