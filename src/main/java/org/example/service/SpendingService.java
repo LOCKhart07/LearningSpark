@@ -1,17 +1,19 @@
 package org.example.service;
 
-import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
+import javax.xml.crypto.Data;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +54,7 @@ public class SpendingService {
         return averageYearlyAmountAll;
     }
 
-    public static LinearRegressionModel trainLinearRegressionModel(Dataset<Row> formattedData, Dataset<Row> newData) {
+    public static void trainLinearRegressionModel(Dataset<Row> formattedData) {
         VectorAssembler assembler = new VectorAssembler().setInputCols(new String[]{"Length of Membership"}).setOutputCol("features");
 
 
@@ -62,6 +64,13 @@ public class SpendingService {
         LinearRegression linearRegression = new LinearRegression().setLabelCol("Yearly Amount Spent").setFeaturesCol("features");
 
         LinearRegressionModel linearRegressionModel = linearRegression.fit(trainingData);
+
+        String modelFilePath = "D:\\Training\\Spark\\LearningSpark\\ml_model\\linear_regression_model";
+        try {
+            linearRegressionModel.write().overwrite().save(modelFilePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 //        Dataset<Row> predictions = model.transform(assembler.transform(data)).select(col("Yearly Amount Spent"), col("prediction"));
 //
 //        RegressionEvaluator evaluator = new RegressionEvaluator().setLabelCol("Yearly Amount Spent").setPredictionCol("prediction").setMetricName("r2");
@@ -69,12 +78,11 @@ public class SpendingService {
 //        double rSquared = evaluator.evaluate(predictions);
 //
 //        System.out.println("R-squared: " + rSquared);
-        return linearRegressionModel;
     }
 
-    public static Dataset<Row> getYearlySpendingBySubscriptionLength(Dataset<Row> formattedData, Dataset<Row> newData) {
-        // Linear Regression
-        LinearRegressionModel linearRegressionModel = SpendingService.trainLinearRegressionModel(formattedData, newData);
+    public static Dataset<Row> getYearlySpendingBySubscriptionLength(Dataset<Row> newData) {
+
+        LinearRegressionModel linearRegressionModel = LinearRegressionModel.load("D:\\Training\\Spark\\LearningSpark\\ml_model\\linear_regression_model");
 
         VectorAssembler vectorAssembler = new VectorAssembler().setInputCols(new String[]{"Length of Membership"}).setOutputCol("features");
 
@@ -85,6 +93,7 @@ public class SpendingService {
         predictions = predictions.withColumnRenamed("features", "Length of Membership").withColumnRenamed("prediction", "Predicted Yearly Spending");
 
         return predictions;
+//        return null;
     }
 
 }

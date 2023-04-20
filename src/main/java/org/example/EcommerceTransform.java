@@ -38,7 +38,7 @@ public class EcommerceTransform {
 
     public static void main(String[] args) {
 
-        SparkSession spark = SparkSession.builder().master("local").appName("EmailFilter").getOrCreate();
+        SparkSession spark = SparkSession.builder().master("local").appName("Global Spark Context").getOrCreate();
 
         spark.sparkContext().setLogLevel("ERROR");
 
@@ -50,25 +50,21 @@ public class EcommerceTransform {
         Dataset<Row> formattedData = rawData.drop("Avg. Session Length").withColumn("Address", regexp_replace(col("Address"), "\\\n", " "));
 
 
-        // Save to Databases
+        // Save to Database
 //        PostgresRepository.save(formattedData, "users");
         ArangoRepository.save(formattedData, "users");
 
 
         SpendingService.getAverageYearlySpendingPerDomain(formattedData).show();
 
-        // Create Dataset with Placeholder users with length of membership
-        List<Row> rowList = Arrays.asList(RowFactory.create(4.5), RowFactory.create(6.2));
-        StructType schema = new StructType(new StructField[]{new StructField("Length of Membership", DataTypes.DoubleType, false, Metadata.empty())});
-        Dataset<Row> newData = spark.createDataFrame(rowList, schema);
+        SpendingService.trainLinearRegressionModel(formattedData);
 
-        SpendingService.getYearlySpendingBySubscriptionLength(formattedData, newData).show();
-        spark.stop();
+        //spark.stop();
+        KafkaService.startKafkaStreaming(spark);
 
-        try {
-            KafkaService.startKafkaStreaming();
-        } catch (TimeoutException | StreamingQueryException e) {
-            throw new RuntimeException(e);
-        }
+//        spark.stop();
+
+
+//        SpendingService.getYearlySpendingBySubscriptionLength(4.5).show();
     }
 }
