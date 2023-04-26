@@ -22,10 +22,16 @@ public class EcommerceTransform {
         String filepath = "D:\\temp\\ecommerce_dataset.csv";
         Dataset<Row> rawData = spark.read().option("header", true).option("inferSchema", true).option("multiline", true).format("csv").load(filepath);
 
+        String newFilepath = "D:\\temp\\newData.xlsx";
+        Dataset<Row> newData = spark.read().option("header", true).option("inferSchema", true).option("multiline", true).format("com.crealytics.spark.excel").load(newFilepath);
+
         // Remove unnecessary Columns
         // Remove newline characters from Address fields
         Dataset<Row> formattedData = rawData.drop("Avg. Session Length").withColumn("Address", regexp_replace(col("Address"), "\\\n", " "));
 
+        Dataset<Row> finalData = formattedData.as("formattedData").join(newData.as("newData"), rawData.col("Email").equalTo(newData.col("Email")), "leftouter").selectExpr("formattedData.Email", "formattedData.Address", "newData.Prime");
+
+        finalData.show();
 
         // Save to Database
 //        PostgresRepository.save(formattedData, "users");
@@ -39,7 +45,7 @@ public class EcommerceTransform {
         //spark.stop();
         KafkaService.startKafkaStreaming(spark);
 
-//        spark.stop();
+        spark.stop();
 
 
 //        SpendingService.getYearlySpendingBySubscriptionLength(4.5).show();

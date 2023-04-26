@@ -66,6 +66,14 @@
             <version>${spark.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.crealytics/spark-excel -->
+        <dependency>
+            <groupId>com.crealytics</groupId>
+            <artifactId>spark-excel_${scala.version}</artifactId>
+            <version>3.3.1_0.18.7</version>
+        </dependency>
+
+
     </dependencies>
 
 </project>
